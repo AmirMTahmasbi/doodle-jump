@@ -98,8 +98,8 @@ function loadAllImages() {
 function loadDarkModeImages() {
     console.log("🌙 Loading dark mode assets at startup...");
 
+    // Only load dark mode images that actually exist
     const darkImageList = [
-        "doodlejumpbg.png",
         "platform.png",
         "platform-broken.png",
         "gas_platform.png",
@@ -111,9 +111,16 @@ function loadDarkModeImages() {
         "akhoond_right_jetpack.png",
         "reform_right.png",
         "reform_right_jetpack.png",
-        "lamizzade_right.png",
         "mountain_bg.png",
-        "game_over.png",
+        "share_X.png",
+        // Missing from dark mode folder, will use normal versions as fallback:
+        // - doodlejumpbg.png
+        // - lamizzade_right.png
+        // - lamizzade_right_jetpack.png  
+        // - game_over.png
+        // - record.png
+        // - Save_Image.png
+        // - restart.png
     ];
 
     let darkImagesLoaded = 0;
@@ -128,30 +135,47 @@ function loadDarkModeImages() {
                 `🌙 Loaded dark image ${imageName} (${darkImagesLoaded}/${totalDarkImages})`,
             );
             if (darkImagesLoaded === totalDarkImages) {
-                console.log("🌙 All dark mode images loaded!");
+                console.log("🌙 All available dark mode images loaded!");
+                // Set up fallbacks for missing dark mode images
+                setupDarkModeFallbacks();
                 darkModeImagesLoaded = true;
             }
         };
         img.onerror = function () {
             console.error(`Failed to load dark image ${imageName}`);
-            // Use normal image as fallback for dark mode
-            if (images[imageName.replace(".png", "")]) {
-                console.log(`Using normal ${imageName} as fallback for dark mode`);
-                images["dark_" + imageName.replace(".png", "")] = images[imageName.replace(".png", "")];
-            } else {
-                createFallbackImage("dark_" + imageName);
-            }
+            createFallbackImage("dark_" + imageName);
             darkImagesLoaded++;
             if (darkImagesLoaded === totalDarkImages) {
                 console.log(
                     "🌙 Dark mode image loading completed (with some fallbacks)",
                 );
+                setupDarkModeFallbacks();
                 darkModeImagesLoaded = true;
             }
         };
         img.src = `./images_dark_mode/${imageName}`;
         // Store dark images with 'dark_' prefix
         images["dark_" + imageName.replace(".png", "")] = img;
+    });
+}
+
+// Set up fallbacks for missing dark mode images
+function setupDarkModeFallbacks() {
+    const fallbackImages = [
+        "doodlejumpbg",
+        "lamizzade_right", 
+        "lamizzade_right_jetpack",
+        "game_over",
+        "record",
+        "Save_Image", 
+        "restart"
+    ];
+    
+    fallbackImages.forEach(imageName => {
+        if (images[imageName]) {
+            images["dark_" + imageName] = images[imageName];
+            console.log(`🌙 Using normal ${imageName} as dark mode fallback`);
+        }
     });
 }
 
