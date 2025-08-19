@@ -20,7 +20,7 @@ function loadAllImages() {
         "Akhoond_right_jetpack.png",
         "reform_right.png",
         "reform_right_jetpack.png",
-        "lamizzade_right.png",
+        "lamizZade_right.png",
         "mountain_bg.png",
         "game_over.png",
         // UI elements
