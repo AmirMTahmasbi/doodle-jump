@@ -1,0 +1,107 @@
+body {
+    font-family: 'Indie Flower', cursive;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    background: #f4f1e8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    overflow: hidden;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+    body {
+        padding: 5px;
+        min-height: 100vh;
+        height: 100vh;
+    }
+}
+
+#board {
+    background-color:#f4f1e8;
+    position: relative;
+    touch-action: none;
+    cursor: pointer;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+}
+
+/* Mobile responsive canvas */
+@media (max-width: 768px) {
+    #board {
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        width: 100vw;
+        height: 100vh;
+        max-width: none;
+        max-height: none;
+    }
+}
+
+.game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(44,62,80,0.9));
+    color: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    font-size: 20px;
+    z-index: 1000;
+    border: 2px solid #11053b;
+    box-shadow: 0 0 30px rgb(17, 5, 59,0.5);
+}
+
+.game-over button {
+    background: linear-gradient(135deg, #11053b, #11053b);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 15px 5px;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-family: 'Indie Flower', cursive;
+}
+
+.game-over button:hover {
+    background: linear-gradient(135deg, #1a0a53, #1a0a53);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgb(4, 51, 255,0.4);
+}
+
+.score {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+    font-family: 'Patrick Hand', cursive;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+    z-index: 100;
+}
