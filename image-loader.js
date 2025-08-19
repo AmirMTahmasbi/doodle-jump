@@ -114,11 +114,6 @@ function loadDarkModeImages() {
         "lamizzade_right.png",
         "mountain_bg.png",
         "game_over.png",
-        // UI elements (same for both modes)
-        "record.png",
-        "Save_Image.png",
-        "share_X.png",
-        "restart.png",
     ];
 
     let darkImagesLoaded = 0;
