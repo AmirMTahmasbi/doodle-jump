@@ -16,11 +16,12 @@ function loadAllImages() {
         "vote_box.png",
         "drone.png",
         "bullet.png",
-        "Akhoond_right.png",
-        "Akhoond_right_jetpack.png",
+        "Akhoond_right.png",         // Note: Capital A
+        "Akhoond_right_jetpack.png", // Note: Capital A
         "reform_right.png",
         "reform_right_jetpack.png",
-        "lamizZade_right.png",
+        "lamizzade_right.png",
+        "lamizzade_right_jetpack.png",
         "mountain_bg.png",
         "game_over.png",
         // UI elements
@@ -90,7 +91,7 @@ function loadAllImages() {
             }
         };
         img.src = `./images/${imageName}`;
-        images[imageName.replace(".png", "")] = img;
+        images[imageName.replace(".png", "").toLowerCase()] = img;
     });
 }
 
@@ -112,7 +113,7 @@ function loadDarkModeImages() {
         "reform_right.png",
         "reform_right_jetpack.png",
         "mountain_bg.png",
-        //"share_X.png",
+        "share_X.png",
         // Missing from dark mode folder, will use normal versions as fallback:
         // - doodlejumpbg.png
         // - lamizzade_right.png
@@ -154,8 +155,8 @@ function loadDarkModeImages() {
             }
         };
         img.src = `./images_dark_mode/${imageName}`;
-        // Store dark images with 'dark_' prefix
-        images["dark_" + imageName.replace(".png", "")] = img;
+        // Store dark images with 'dark_' prefix (lowercase keys)
+        images["dark_" + imageName.replace(".png", "").toLowerCase()] = img;
     });
 }
 
@@ -167,7 +168,7 @@ function setupDarkModeFallbacks() {
         "lamizzade_right_jetpack",
         "game_over",
         "record",
-        "Save_Image", 
+        "save_image",  // lowercase to match your file
         "restart"
     ];
     
