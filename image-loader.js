@@ -112,7 +112,7 @@ function loadDarkModeImages() {
         "reform_right.png",
         "reform_right_jetpack.png",
         "mountain_bg.png",
-        "share_X.png",
+        //"share_X.png",
         // Missing from dark mode folder, will use normal versions as fallback:
         // - doodlejumpbg.png
         // - lamizzade_right.png
