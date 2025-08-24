@@ -943,22 +943,22 @@ function drawGameOver() {
     // Restart button
     const restartButton = {
         x: startX,
-        y: buttonY - 25,
+        y: buttonY + buttonWidth,
         width: buttonWidth,
         height: 90,
     };
 
     // Share on X button
     const shareButton = {
-        x: startX + buttonWidth + buttonGap + 10,
-        y: buttonY + 30,
+        x: startX ,
+        y: buttonY +2*buttonWidth,
         width: buttonWidth,
         height: 90,
     };
 
     // Save image button
     const saveButton = {
-        x: centerX - 100,
+        x: centerX,
         y: buttonY + 120,
         width: buttonWidth,
         height: 80,
