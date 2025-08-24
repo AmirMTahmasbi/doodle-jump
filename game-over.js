@@ -90,8 +90,8 @@ function drawGameOver() {
 
     // Share on X button
     const shareButton = {
-        x: startX + buttonWidth + buttonGap,
-        y: buttonY,
+        x: centerX -120,
+        y: boardHeight * 0.7,
         width: buttonWidth,
         height: buttonHeight,
     };
