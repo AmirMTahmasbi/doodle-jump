@@ -52,7 +52,7 @@ function drawGameOver() {
     context.fillStyle = "#2c2c2c";
     context.font = `bold ${boardHeight * 0.036}px 'Patrick Hand'`; // ~32px at 900px height
     context.textAlign = "center";
-    context.fillText(score, centerX- 200, boardHeight * 0.13 + boardHeight * 0.4); // ~150px down, centered in box
+    context.fillText(score, centerX- 60, boardHeight * 0.13 + boardHeight * 0.4); // ~150px down, centered in box
 
     // Add level completion message below the record
     const gameLevel = getCurrentDifficultyLevel();
