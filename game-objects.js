@@ -1,7 +1,6 @@
 // game-objects.js - Game Object Updates and Management
 
 // ========== PLATFORM MANAGEMENT ==========
-
 function updatePlatforms(difficulty) {
     const currentLevel = getCurrentDifficultyLevel();
     const isDarkMode = currentLevel >= 7;
@@ -83,10 +82,13 @@ function updatePlatforms(difficulty) {
         }
     }
 
-    // Keep player from going too high off screen
-    if (player.y < 50) {
-        const pushDown = 50 - player.y;
-        player.y = 50;
+    // FIXED: Keep player centered in screen (improved camera following)
+    const targetPlayerY = boardHeight * 0.4; // Keep player at 40% from top (better than fixed 50px)
+    
+    if (player.y < targetPlayerY) {
+        // Calculate how much to push everything down to center the player
+        const pushDown = targetPlayerY - player.y;
+        player.y = targetPlayerY;
 
         platformArray.forEach((platform) => {
             platform.y += pushDown;

@@ -8,6 +8,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Indie+Flower&display=swap" rel="stylesheet">
+    
+    <!-- ADD THE SCRIPT HERE, INSIDE <head> -->
+    <script>
+        // Force font loading before game starts
+        document.fonts.ready.then(function() {
+            console.log('✅ All fonts loaded successfully');
+        });
+        
+        // Preload fonts immediately
+        if (document.fonts && document.fonts.load) {
+            document.fonts.load('16px "Patrick Hand"');
+            document.fonts.load('16px "Indie Flower"');
+            document.fonts.load('bold 24px "Patrick Hand"');
+            document.fonts.load('bold 32px "Patrick Hand"');
+        }
+    </script>
 </head>
 <body>
     <canvas id="board"></canvas>

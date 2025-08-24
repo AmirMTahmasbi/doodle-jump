@@ -413,7 +413,6 @@ function applyDarkness(level) {
 }
 
 // ========== GAME OBJECT UPDATES ==========
-
 function updatePlatforms(difficulty) {
     const currentLevel = getCurrentDifficultyLevel();
     const isDarkMode = currentLevel >= 7;
@@ -421,48 +420,64 @@ function updatePlatforms(difficulty) {
     for (let i = platformArray.length - 1; i >= 0; i--) {
         let platform = platformArray[i];
 
+        // UPDATE MOVING PLATFORMS FIRST
+        if (platform.type === "moving") {
+            // Simple horizontal movement
+            if (platform.movementType === "horizontal") {
+                platform.x += platform.speed * platform.direction;
+
+                // Bounce off boundaries
+                if (platform.x <= platform.minX || platform.x >= platform.maxX) {
+                    platform.direction *= -1;
+                }
+            }
+            // Simple bounce movement
+            else if (platform.movementType === "bounce") {
+                platform.bounceOffset += platform.bounceSpeed * platform.speed;
+                platform.y = platform.originalY + Math.sin(platform.bounceOffset) * platform.bounceHeight;
+            }
+        }
+
         // Move platforms down when player goes up, but keep player visible
         if (velocityY < 0 && player.y < (boardHeight * 2) / 3) {
-            // Changed from 3/4 to 2/3
             platform.y -= initialVelocityY;
+
+            // Update moving platform original positions when screen scrolls
+            if (platform.type === "moving") {
+                platform.originalY -= initialVelocityY;
+            }
         }
 
         if (detectCollision(player, platform) && velocityY >= 0) {
             // Check platform type
             if (platform.type === "gas" && difficulty.gasExplosions) {
-                // Gas explosion ONLY when actually LANDING on platform (falling down with significant velocity)
                 if (velocityY > 2) {
-                    // Only explode when falling down with enough speed (actual landing)
                     createExplosion(platform.x, platform.y);
-                    // Remove the exploded platform instead of keeping it
                     platformArray.splice(i, 1);
                     water -= 20;
                     if (water < 0) water = 0;
 
-                    // Still allow player to jump after gas explosion
                     if (water > 0) {
-                        velocityY = initialVelocityY; // Full jump height with water
+                        velocityY = initialVelocityY;
                     } else {
-                        velocityY = initialVelocityY * 0.7; // Reduced jump height without water
+                        velocityY = initialVelocityY * 0.7;
                     }
-                    continue; // Skip to next platform since this one is removed
+                    continue;
                 }
-                // Allow normal jumping from gas platform without penalty if just touching
                 if (water > 0) {
-                    velocityY = initialVelocityY; // Full jump height with water
+                    velocityY = initialVelocityY;
                 } else {
-                    velocityY = initialVelocityY * 0.7; // Reduced jump height without water
+                    velocityY = initialVelocityY * 0.7;
                 }
             } else if (platform.type === "broken") {
-                // Broken platform disappears when hit
                 platformArray.splice(i, 1);
                 continue;
             } else if (platform.type !== "exploded") {
-                // Jump height depends on water level
+                // Normal jump for all platforms including moving
                 if (water > 0) {
-                    velocityY = initialVelocityY; // Full jump height with water
+                    velocityY = initialVelocityY;
                 } else {
-                    velocityY = initialVelocityY * 0.7; // Reduced jump height without water
+                    velocityY = initialVelocityY * 0.7;
                 }
             }
         }
@@ -479,14 +494,21 @@ function updatePlatforms(difficulty) {
         }
     }
 
-    // Keep player from going too high off screen
-    if (player.y < 50) {
-        // Move all platforms and objects down to keep player visible
-        const pushDown = 50 - player.y;
-        player.y = 50;
+    // FIXED: Keep player centered in screen (improved camera following)
+    const targetPlayerY = boardHeight * 0.4; // Keep player at 40% from top (better than fixed 50px)
+    
+    if (player.y < targetPlayerY) {
+        // Calculate how much to push everything down to center the player
+        const pushDown = targetPlayerY - player.y;
+        player.y = targetPlayerY;
 
         platformArray.forEach((platform) => {
             platform.y += pushDown;
+
+            // Update moving platform original positions
+            if (platform.type === "moving") {
+                platform.originalY += pushDown;
+            }
         });
 
         voteBoxArray.forEach((box) => {
@@ -520,7 +542,6 @@ function updatePlatforms(difficulty) {
         newPlatform(difficulty);
     }
 }
-
 function updateVoteBoxes() {
     const currentLevel = getCurrentDifficultyLevel();
     const isDarkMode = currentLevel >= 7;
