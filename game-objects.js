@@ -202,7 +202,7 @@ function newPlatform(difficulty) {
             movementType: movementType,
             originalX: randomX,
             originalY: platformArray[platformArray.length - 1].y - platformGap,
-            speed: 0.3 + Math.random() * 0.4, // SLOWER: 0.3-0.7 instead of 1-3
+            speed: 0.5 + Math.random() * 0.4, // SLOWER: 0.3-0.7 instead of 1-3
             direction: Math.random() < 0.5 ? 1 : -1,
 
             // Movement bounds
