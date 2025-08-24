@@ -44,7 +44,7 @@ function drawGameOver() {
     if (images.record && images.record.width) {
         const recordImgWidth = 200;
         const recordImgHeight = 250;
-        const recordX = centerX - recordImgWidth / 2 - 60;
+        const recordX = centerX - recordImgWidth / 2;
         const recordY = boardHeight / 2 - 280;
         context.drawImage(
             images.record,
@@ -59,7 +59,7 @@ function drawGameOver() {
     context.fillStyle = "#2c2c2c"; // Dark color for good contrast in the box
     context.font = "bold 32px 'Patrick Hand'"; // Large, bold font
     context.textAlign = "center";
-    context.fillText(score, centerX - 60, 340);
+    context.fillText(score, centerX, recordY + 150); // Adjusted to align within the record box
 
     // Add level completion message below the record
     const gameLevel = getCurrentDifficultyLevel();
@@ -75,14 +75,12 @@ function drawGameOver() {
     context.fillStyle = "#FFD700"; // Yellow color
     context.font = "bold 32px 'Patrick Hand'";
     context.textAlign = "center";
-    context.fillText(levelMessage, centerX - 60, 250);
-
-    // Height record with special formatting for level 7+
+    context.fillText(levelMessage, centerX, recordY + 200); // Positioned below the record header
 
     // Action buttons using your custom images
-    const buttonY = boardHeight / 2 + 60;
+    const buttonY = boardHeight / 2 + 120; // Moved up to fit within canvas
     const buttonWidth = 120;
-    const buttonHeight = 60;
+    const buttonHeight = 90;
     const buttonGap = 20;
 
     // Calculate button positions
@@ -92,25 +90,25 @@ function drawGameOver() {
     // Restart button
     const restartButton = {
         x: startX,
-        y: buttonY - 25,
+        y: buttonY,
         width: buttonWidth,
-        height: 90,
+        height: buttonHeight,
     };
 
     // Share on X button
     const shareButton = {
-        x: startX + buttonWidth + buttonGap + 10,
-        y: buttonY + 30,
+        x: startX + buttonWidth + buttonGap,
+        y: buttonY,
         width: buttonWidth,
-        height: 90,
+        height: buttonHeight,
     };
 
     // Save image button
     const saveButton = {
-        x: centerX - 100,
-        y: buttonY + 120,
+        x: startX + (buttonWidth + buttonGap) * 2,
+        y: buttonY,
         width: buttonWidth,
-        height: 80,
+        height: buttonHeight,
     };
 
     // Store button positions for click detection
