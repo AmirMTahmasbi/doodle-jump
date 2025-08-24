@@ -1,4 +1,4 @@
-// game-core.js - Core Game Logic and State Management
+// game-core.js - Core Game Logic and State Management with Responsive Design
 
 // Global canvas variables (shared between menu and game)
 let board;
@@ -135,7 +135,7 @@ const difficultyLevels = {
     },
 };
 
-// ========== INITIALIZATION ==========
+// ========== RESPONSIVE INITIALIZATION ==========
 window.onload = function () {
     console.log("Peak Climb Game loading...");
     board = document.getElementById("board");
@@ -145,33 +145,12 @@ window.onload = function () {
         return;
     }
 
-    // Set canvas to full viewport size for better resolution
-    board.width = window.innerWidth;
-    board.height = window.innerHeight;
-    boardWidth = window.innerWidth;
-    boardHeight = window.innerHeight;
-
-    context = board.getContext("2d");
-
-    // Enable high DPI scaling for crisp text
-    const dpr = window.devicePixelRatio || 1;
-    const rect = board.getBoundingClientRect();
-
-    board.width = rect.width * dpr;
-    board.height = rect.height * dpr;
-
-    context.scale(dpr, dpr);
-
-    board.style.width = rect.width + "px";
-    board.style.height = rect.height + "px";
-
-    // Update board dimensions
-    boardWidth = rect.width;
-    boardHeight = rect.height;
-
-    // Calculate player starting position based on actual board size
-    playerX = boardWidth / 2 - playerWidth / 2;
-    playerY = (boardHeight * 7) / 8 - playerHeight;
+    // Set up responsive canvas
+    setupResponsiveCanvas();
+    
+    // Handle orientation changes and resizes
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleOrientationChange);
 
     console.log(`Board initialized: ${boardWidth}x${boardHeight}`);
     console.log(`Player start position: ${playerX}, ${playerY}`);
@@ -180,26 +159,136 @@ window.onload = function () {
     loadAllImages();
 };
 
-// Initialize electricity bar segments with fixed positions
-function initializeElectricitySegments() {
-    electricitySegments = [];
-    const barWidth = 80;
-    const barHeight = 12;
-    const totalSegments = 5; // Always create 5 segments
-    const segmentWidth = (barWidth - (totalSegments - 1) * 2) / totalSegments;
-    const segmentGap = 2;
-    const electricityX = boardWidth - barWidth - 15;
-    const barY = 15;
+function setupResponsiveCanvas() {
+    // Get actual viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate optimal canvas size maintaining aspect ratio
+    const targetAspectRatio = 0.5; // 1:2 ratio (width:height)
+    
+    let canvasWidth, canvasHeight;
+    
+    if (viewportWidth / viewportHeight > targetAspectRatio) {
+        // Viewport is wider than target ratio - constrain by height
+        canvasHeight = viewportHeight;
+        canvasWidth = canvasHeight * targetAspectRatio;
+    } else {
+        // Viewport is taller than target ratio - constrain by width  
+        canvasWidth = viewportWidth;
+        canvasHeight = canvasWidth / targetAspectRatio;
+    }
+    
+    // Ensure minimum playable size
+    canvasWidth = Math.max(320, canvasWidth);
+    canvasHeight = Math.max(480, canvasHeight);
+    
+    // Set canvas size
+    boardWidth = canvasWidth;
+    boardHeight = canvasHeight;
+    
+    // Set up high DPI rendering
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Set actual canvas size for sharp rendering
+    board.width = canvasWidth * dpr;
+    board.height = canvasHeight * dpr;
+    
+    // Set display size
+    board.style.width = canvasWidth + 'px';
+    board.style.height = canvasHeight + 'px';
+    
+    // Get context and scale for high DPI
+    context = board.getContext("2d");
+    context.scale(dpr, dpr);
+    
+    // Update player starting position
+    playerX = boardWidth / 2 - playerWidth / 2;
+    playerY = (boardHeight * 7) / 8 - playerHeight;
+    
+    console.log(`Responsive canvas setup: ${canvasWidth}x${canvasHeight} (DPR: ${dpr})`);
+    console.log(`Viewport: ${viewportWidth}x${viewportHeight}`);
+}
 
-    for (let i = 0; i < totalSegments; i++) {
-        electricitySegments.push({
-            x: electricityX + i * (segmentWidth + segmentGap),
-            y: barY,
-            width: segmentWidth,
-            height: barHeight,
-            visible: true, // All segments start visible
-            filled: true, // All segments start filled
-        });
+function handleResize() {
+    // Debounce resize events
+    clearTimeout(window.resizeTimeout);
+    window.resizeTimeout = setTimeout(() => {
+        console.log("Handling resize...");
+        setupResponsiveCanvas();
+        
+        // Reinitialize electricity segments with new dimensions
+        if (typeof initializeElectricitySegments === 'function') {
+            initializeElectricitySegments();
+        }
+        
+        // Redraw current screen
+        if (gameState === 'character-select') {
+            if (typeof drawCharacterSelection === 'function') {
+                drawCharacterSelection();
+            }
+        } else if (gameState === 'playing' && gameOver) {
+            if (typeof drawGameOver === 'function') {
+                drawGameOver();
+            }
+        }
+    }, 100);
+}
+
+function handleOrientationChange() {
+    // Handle orientation change with delay for iOS
+    setTimeout(() => {
+        console.log("Handling orientation change...");
+        handleResize();
+    }, 500);
+}
+
+// Initialize electricity bar segments with responsive positioning
+function initializeElectricitySegments() {
+    if (typeof ResponsiveUtils !== 'undefined') {
+        // Use responsive utilities if available
+        electricitySegments = [];
+        const safeArea = ResponsiveUtils.getSafeAreaMargins();
+        const barWidth = ResponsiveUtils.scale(80);
+        const barHeight = ResponsiveUtils.scale(12);
+        const totalSegments = 5;
+        const segmentWidth = (barWidth - (totalSegments - 1) * ResponsiveUtils.scale(2)) / totalSegments;
+        const segmentGap = ResponsiveUtils.scale(2);
+        const electricityX = boardWidth - barWidth - safeArea.right - ResponsiveUtils.scale(15);
+        const barY = safeArea.top + ResponsiveUtils.scale(15);
+
+        for (let i = 0; i < totalSegments; i++) {
+            electricitySegments.push({
+                x: electricityX + i * (segmentWidth + segmentGap),
+                y: barY,
+                width: segmentWidth,
+                height: barHeight,
+                visible: true,
+                filled: true,
+            });
+        }
+    } else {
+        // Fallback to original initialization
+        console.warn("ResponsiveUtils not loaded, using fallback electricity segments");
+        electricitySegments = [];
+        const barWidth = 80;
+        const barHeight = 12;
+        const totalSegments = 5;
+        const segmentWidth = (barWidth - (totalSegments - 1) * 2) / totalSegments;
+        const segmentGap = 2;
+        const electricityX = boardWidth - barWidth - 15;
+        const barY = 15;
+
+        for (let i = 0; i < totalSegments; i++) {
+            electricitySegments.push({
+                x: electricityX + i * (segmentWidth + segmentGap),
+                y: barY,
+                width: segmentWidth,
+                height: barHeight,
+                visible: true,
+                filled: true,
+            });
+        }
     }
 }
 
@@ -407,7 +496,7 @@ function getCurrentDifficulty() {
 
 // Helper function to get current difficulty level number
 function getCurrentDifficultyLevel() {
-    for (let level = 7; level >= 1; level--) {
+    for (let level = 8; level >= 1; level--) {
         if (altitude >= difficultyLevels[level].altitude) {
             return level;
         }
@@ -518,5 +607,139 @@ function resetGame() {
         returnToMenu();
     } else {
         console.error("returnToMenu function not found in menu.js");
+    }
+}
+
+// ========== PLATFORM MANAGEMENT ==========
+
+function placePlatforms() {
+    platformArray = [];
+
+    // Starting platform
+    let platform = {
+        img: images.platform,
+        x: boardWidth / 2,
+        y: boardHeight - 50,
+        width: platformWidth,
+        height: platformHeight,
+        type: "normal",
+    };
+    platformArray.push(platform);
+
+    // Create MANY MORE platforms initially with closer spacing
+    for (let i = 0; i < 80; i++) { // Increased from 30 to 80 platforms
+        newPlatform(difficultyLevels[1]);
+    }
+}
+
+function newPlatform(difficulty) {
+    let randomX = Math.floor((Math.random() * boardWidth * 3) / 4);
+    let platformType = "normal";
+    let platformImg;
+
+    const currentLevel = getCurrentDifficultyLevel();
+    const isDarkMode = currentLevel >= 7;
+
+    // Calculate dynamic spacing based on altitude/difficulty
+    let platformGap;
+    if (altitude < 1000) {
+        platformGap = 60; // Harder at the beginning - wider gaps
+    } else if (altitude < 2000) {
+        platformGap = 65; // Getting easier
+    } else if (altitude < 3000) {
+        platformGap = 70; // Medium spacing
+    } else if (altitude < 4000) {
+        platformGap = 70; // Closer spacing
+    } else if (altitude < 5000) {
+        platformGap = 75; // Even closer
+    } else if (altitude < 6000) {
+        platformGap = 75; // Very close
+    } else {
+        platformGap = 75; // Easiest spacing at high altitude
+    }
+
+    console.log(
+        `Creating new platform - Level: ${currentLevel}, Dark Mode: ${isDarkMode}, Gap: ${platformGap}`,
+    );
+
+    // Choose image based on mode and difficulty
+    if (isDarkMode) {
+        // Dark mode images
+        console.log("Using dark mode images");
+        if (difficulty.gasExplosions && Math.random() < 0.35) { // Increased from 0.3 to 0.35 for more gas platforms
+            platformType = "gas";
+            platformImg = images.dark_gas_platform;
+            console.log(
+                `Selected dark gas platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
+        } else if (Math.random() < 0.1) {
+            platformType = "broken";
+            platformImg = images["dark_platform-broken"];
+            console.log(
+                `Selected dark broken platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
+        } else {
+            platformImg = images.dark_platform;
+            console.log(
+                `Selected dark normal platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
+        }
+    } else {
+        // Normal mode images
+        console.log("Using normal mode images");
+        if (difficulty.gasExplosions && Math.random() < 0.15) { // Increased from 0.1 to 0.15 for more gas platforms
+            platformType = "gas";
+            platformImg = images.gas_platform;
+            console.log(
+                `Selected normal gas platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
+        } else if (Math.random() < 0.1) {
+            platformType = "broken";
+            platformImg = images["platform-broken"];
+            console.log(
+                `Selected normal broken platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
+        } else {
+            platformImg = images.platform;
+            console.log(
+                `Selected normal platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
+        }
+    }
+
+    // Fallback if image not found
+    if (!platformImg) {
+        console.error(
+            `Platform image not found for type: ${platformType}, dark mode: ${isDarkMode}`,
+        );
+        console.log("Available image keys:", Object.keys(images));
+        platformImg = images.platform || createFallbackImage("platform.png"); // Use normal platform as fallback
+    }
+
+    let platform = {
+        img: platformImg,
+        x: randomX,
+        y: platformArray[platformArray.length - 1].y - platformGap, // Use dynamic gap
+        width: platformType === "gas" ? gasPlatformWidth : platformWidth,
+        height: platformType === "gas" ? gasPlatformHeight : platformHeight,
+        type: platformType,
+    };
+
+    platformArray.push(platform);
+
+    // Vote boxes remain the same - original 15% chance
+    if (Math.random() < 0.15) {
+        const voteBoxImg = isDarkMode ? images.dark_vote_box : images.vote_box;
+        console.log(
+            `Creating vote box - Dark mode: ${isDarkMode}, Image found: ${voteBoxImg ? "yes" : "no"}`,
+        );
+
+        voteBoxArray.push({
+            x: randomX + 70,
+            y: platform.y - 40,
+            width: 60,
+            height: 60,
+            img: voteBoxImg || images.vote_box, // Fallback to normal vote box
+        });
     }
 }

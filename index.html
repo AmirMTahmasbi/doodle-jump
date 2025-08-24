@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Political Peak Climb - Close to the Peak</title>
     <link rel="stylesheet" href="doodlejump.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,14 +12,14 @@
 <body>
     <canvas id="board"></canvas>
     <script src="game-core.js"></script>
-    <!-- Load game.js first (contains initialization) -->
+    <!-- Load responsive utilities first -->
+    <script src="responsive-utils.js"></script>
     <script src="image-loader.js"></script>
     <script src="rendering.js"></script>
     <script src="moving-platform.js"></script>
     <script src="game-objects.js"></script>
     <script src="game-over.js"></script>
     <script src="input-controls.js"></script>
-    <!-- Load menu.js second (menu functions) -->
     <script src="menu.js"></script>
 </body>
 </html>
