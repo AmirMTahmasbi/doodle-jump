@@ -346,6 +346,7 @@ function initializeGame(selectedCharacter) {
 
     console.log("Game initialized, starting main loop");
     startMainLoop();
+    /* RAF removed for fixed-step */
 }
 
 // Reset electricity segments to initial state
@@ -359,7 +360,7 @@ function resetElectricitySegments() {
 
 // === Fixed-timestep main loop (60 Hz simulation) ===
 const STEP = 1 / 60;
-const MAX_STEPS = 2; // small catch-up but avoid spiral of death
+const MAX_STEPS = 1; // ensure we never double-run updates per frame
 let __acc = 0;
 let __last = performance.now();
 
@@ -369,22 +370,19 @@ function startMainLoop() {
 }
 
 function __loop(now = performance.now()) {
-  __acc += Math.min(0.25, (now - __last) / 1000); // cap to avoid huge jumps
+  // Accumulate real time
+  __acc += Math.min(0.25, (now - __last) / 1000);
   __last = now;
 
-  let steps = 0;
-  // Only run update() when enough real time has accumulated for a fixed step.
-  while (__acc >= STEP && steps < MAX_STEPS) {
-    update();              // existing update does both simulation and rendering
+  // Run at a fixed 60Hz rate (at most one step per RAF)
+  if (__acc >= STEP) {
+    update();     // your existing update does simulation+render
     __acc -= STEP;
-    steps++;
   }
 
-  // If not enough time for an update step, we still keep the RAF going.
   requestAnimationFrame(__loop);
 }
 // === End fixed-timestep loop ===
-
 // Main game loop
 function update() {
     if (gameState !== "playing") {
@@ -392,7 +390,7 @@ function update() {
         return;
     }
 
-    requestAnimationFrame(update);
+    /* RAF removed for fixed-step */
 
     if (gameOver) {
         drawGameOver();
