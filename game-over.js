@@ -44,7 +44,7 @@ function drawGameOver() {
         const recordImgWidth = boardWidth * 0.444; // ~200px at 450px width
         const recordImgHeight = boardHeight * 0.278; // ~250px at 900px height
         const recordX = centerX - recordImgWidth / 2 - 80;
-        const recordY = boardHeight * 0.15; // ~280px from top at 900px height
+        const recordY = boardHeight * 0.13; // ~280px from top at 900px height
         context.drawImage(images.record, recordX, recordY, recordImgWidth, recordImgHeight);
     }
 
