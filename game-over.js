@@ -59,7 +59,7 @@ function drawGameOver() {
     context.fillStyle = "#2c2c2c"; // Dark color for good contrast in the box
     context.font = "bold 32px 'Patrick Hand'"; // Large, bold font
     context.textAlign = "center";
-    context.fillText(score, centerX - 60, 175);
+    context.fillText(score, centerX - 60, 150);
 
     // Add level completion message below the record
     const gameLevel = getCurrentDifficultyLevel();
