@@ -78,7 +78,7 @@ function drawGameOver() {
 
     // Calculate button positions
     const totalButtonWidth = buttonWidth * 3 + buttonGap * 2;
-    const startX = centerX -20;
+    const startX = centerX -100;
 
     // Restart button
     const restartButton = {
