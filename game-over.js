@@ -98,8 +98,8 @@ function drawGameOver() {
 
     // Save image button
     const saveButton = {
-        x: startX + (buttonWidth + buttonGap) * 2,
-        y: buttonY,
+        x: centerX -120,
+        y: boardHeight * 0.7,
         width: buttonWidth,
         height: buttonHeight,
     };
