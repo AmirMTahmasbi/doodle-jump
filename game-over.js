@@ -68,7 +68,7 @@ function drawGameOver() {
     context.fillStyle = "#FFD700";
     context.font = `bold ${boardHeight * 0.036}px 'Patrick Hand'`;
     context.textAlign = "center";
-    context.fillText(levelMessage, centerX, recordY + boardHeight * 0.222); // ~200px down, below record
+    context.fillText(levelMessage, centerX- 80, boardHeight * 0.4); // ~200px down, below record
 
     // Action buttons using your custom images
     const buttonY = boardHeight * 0.667; // ~600px at 900px height, middle-lower part
