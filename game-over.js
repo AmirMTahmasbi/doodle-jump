@@ -74,7 +74,7 @@ function drawGameOver() {
     const buttonY = boardHeight * 0.667; // ~600px at 900px height, middle-lower part
     const buttonWidth = boardWidth * 0.267; // ~120px at 450px width
     const buttonHeight = boardHeight * 0.1; // ~90px at 900px height
-    const buttonGap = boardWidth * 0.044; // ~20px at 450px width
+    const buttonGap = boardWidth * 0.0044; // ~20px at 450px width
 
     // Calculate button positions
     const totalButtonWidth = buttonWidth * 3 + buttonGap * 2;
