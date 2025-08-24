@@ -91,7 +91,7 @@ function drawGameOver() {
     // Share on X button
     const shareButton = {
         x: startX ,
-        y: buttonY + buttonHeight+ buttonGap,
+        y: buttonY + buttonHeight,
         width: buttonWidth,
         height: buttonHeight,
     };
@@ -99,7 +99,7 @@ function drawGameOver() {
     // Save image button
     const saveButton = {
         x: startX ,
-        y: buttonY + 2*(buttonHeight + buttonGap),
+        y: buttonY + 2*(buttonHeight),
         width: buttonWidth,
         height: buttonHeight,
     };
