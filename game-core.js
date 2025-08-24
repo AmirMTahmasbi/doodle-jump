@@ -29,8 +29,8 @@ let player = {
 // Physics
 let velocityX = 0;
 let velocityY = 0;
-let initialVelocityY = -480; // Converted to per-second (-8 * 60)
-let gravity = 24; // Converted to per-second (0.4 * 60)
+let initialVelocityY = -8;
+let gravity = 0.4;
 
 // Game mechanics
 let water = 100;
@@ -135,12 +135,6 @@ const difficultyLevels = {
     },
 };
 
-// --- Fixed-step globals ---
-const STEP = 1 / 60;        // 60 Hz simulation
-const MAX_STEPS = 5;
-let acc = 0;
-let last = performance.now();
-
 // ========== RESPONSIVE INITIALIZATION ==========
 window.onload = function () {
     console.log("Peak Climb Game loading...");
@@ -163,7 +157,6 @@ window.onload = function () {
 
     initializeElectricitySegments();
     loadAllImages();
-    startMainLoop();
 };
 
 function setupResponsiveCanvas() {
@@ -229,7 +222,16 @@ function handleResize() {
             initializeElectricitySegments();
         }
         
-        // Redraw current screen (loop will handle it, but force if needed)
+        // Redraw current screen
+        if (gameState === 'character-select') {
+            if (typeof drawCharacterSelection === 'function') {
+                drawCharacterSelection();
+            }
+        } else if (gameState === 'playing' && gameOver) {
+            if (typeof drawGameOver === 'function') {
+                drawGameOver();
+            }
+        }
     }, 100);
 }
 
@@ -342,7 +344,8 @@ function initializeGame(selectedCharacter) {
     placePlatforms();
     setupGameControls();
 
-    console.log("Game initialized");
+    console.log("Game initialized, starting main loop");
+    requestAnimationFrame(update);
 }
 
 // Reset electricity segments to initial state
@@ -353,37 +356,17 @@ function resetElectricitySegments() {
     });
 }
 
-// Start the main loop
-function startMainLoop() {
-  last = performance.now();
-  requestAnimationFrame(loop);
-}
+// Main game loop
+function update() {
+    if (gameState !== "playing") {
+        console.log("Update called but game state is:", gameState);
+        return;
+    }
 
-function loop(now = performance.now()) {
-  if (gameState !== "playing") {
-    render();
-    requestAnimationFrame(loop);
-    return;
-  }
+    requestAnimationFrame(update);
 
-  acc += Math.min(0.25, (now - last) / 1000);
-  last = now;
-
-  let steps = 0;
-  while (acc >= STEP && steps < MAX_STEPS) {
-    fixedUpdate(STEP);
-    acc -= STEP;
-    steps++;
-  }
-
-  render();
-
-  requestAnimationFrame(loop);
-}
-
-// Fixed timestep simulation
-function fixedUpdate(dt) {
     if (gameOver) {
+        drawGameOver();
         return;
     }
 
@@ -394,15 +377,18 @@ function fixedUpdate(dt) {
     const currentDifficulty = getCurrentDifficulty();
 
     // Update resources
-    updateResources(currentDifficulty, dt);
+    updateResources(currentDifficulty);
 
     // Update electricity segments
     updateElectricitySegments();
 
+    // Clear screen with background
+    drawBackground(currentDifficulty);
+
     // Player physics
-    player.x += velocityX * dt;
-    player.y += velocityY * dt;
-    velocityY += gravity * dt;
+    player.x += velocityX;
+    player.y += velocityY;
+    velocityY += gravity;
 
     // Wrap around screen horizontally
     if (player.x > boardWidth) {
@@ -410,58 +396,6 @@ function fixedUpdate(dt) {
     } else if (player.x + player.width < 0) {
         player.x = boardWidth;
     }
-
-    // Update and draw platforms
-    updatePlatforms(currentDifficulty); // TODO: Split into updatePlatforms(dt, difficulty) for simulation only (no drawing)
-
-    // Update and draw vote boxes
-    updateVoteBoxes(); // TODO: Split into updateVoteBoxes(dt) for simulation only (no drawing)
-
-    // Update and draw drones
-    if (currentDifficulty.drones) {
-        updateDrones(); // TODO: Split into updateDrones(dt) for simulation only (no drawing)
-    }
-
-    // Update and draw bullets
-    updateBullets(); // TODO: Split into updateBullets(dt) for simulation only (no drawing)
-
-    // Update and draw explosions
-    updateExplosions(); // TODO: Split into updateExplosions(dt) for simulation only (no drawing)
-
-    // Update score
-    updateScore();
-
-    // Check game over - only when player falls off screen or electricity runs out
-    if (player.y > boardHeight) { // Fixed: use boardHeight (logical height)
-        gameOver = true;
-    }
-
-    // Update electricity flash timer (decrement at fixed rate)
-    if (electricityFlashTimer > 0) {
-        electricityFlashTimer--;
-    }
-}
-
-// Rendering function
-function render() {
-    if (gameState === "character-select") {
-        drawCharacterSelection();
-        return;
-    } else if (gameState === "loading") {
-        // TODO: Draw loading screen if defined
-        return;
-    }
-
-    // Playing state
-    if (gameOver) {
-        drawGameOver();
-        return;
-    }
-
-    const currentDifficulty = getCurrentDifficulty();
-
-    // Clear screen with background
-    drawBackground(currentDifficulty);
 
     // Choose player image based on water availability, movement direction, and dark mode
     let currentPlayerImg;
@@ -514,16 +448,33 @@ function render() {
         );
     }
 
-    // TODO: Add draw functions for platforms, vote boxes, etc. (drawing only, no updates)
-    // Example placeholders:
-    // drawPlatforms();
-    // drawVoteBoxes();
-    // if (currentDifficulty.drones) drawDrones();
-    // drawBullets();
-    // drawExplosions();
+    // Update and draw platforms
+    updatePlatforms(currentDifficulty);
+
+    // Update and draw vote boxes
+    updateVoteBoxes();
+
+    // Update and draw drones
+    if (currentDifficulty.drones) {
+        updateDrones();
+    }
+
+    // Update and draw bullets
+    updateBullets();
+
+    // Update and draw explosions
+    updateExplosions();
+
+    // Update score
+    updateScore();
 
     // Draw UI
     drawUI(currentDifficulty);
+
+    // Check game over - only when player falls off screen or electricity runs out
+    if (player.y > board.height) {
+        gameOver = true;
+    }
 
     // Apply darkness overlay
     if (currentDifficulty.darkness > 0) {
@@ -553,21 +504,21 @@ function getCurrentDifficultyLevel() {
     return 1;
 }
 
-function updateResources(difficulty, dt) {
+function updateResources(difficulty) {
     const previousElectricity = electricity;
     const currentLevel = getCurrentDifficultyLevel();
 
-    // Water consumption with every jump (when moving up) - reduced amount, scaled by dt
+    // Water consumption with every jump (when moving up) - reduced amount
     if (velocityY < 0) {
         // When jumping up
-        water -= 12 * dt; // Converted to per-second (0.2 * 60)
+        water -= 0.2; // Reduced from 0.5 to 0.2 for longer gameplay
         if (water < 0) water = 0;
     }
 
-    // Electricity consumption in higher levels - much slower, scaled by dt
+    // Electricity consumption in higher levels - much slower
     if (difficulty.altitude >= 4000) {
         // Changed from 2000 to 4000
-        electricity -= 1.2 * dt; // Converted to per-second (0.02 * 60)
+        electricity -= 0.02; // Reduced from 0.05 to 0.02
         if (electricity < 0) electricity = 0;
     }
 
@@ -581,12 +532,14 @@ function updateResources(difficulty, dt) {
 }
 
 function createElectricityFlash() {
-    electricityFlashTimer = 30; // Flash for 30 simulation steps (0.5 sec at 60 Hz)
+    electricityFlashTimer = 30; // Flash for 30 frames (more visible)
 }
 
 function applyElectricityFlash() {
     if (electricityFlashTimer > 0) {
-        // Create stronger flashing effect (no decrement here; handled in fixedUpdate)
+        electricityFlashTimer--;
+
+        // Create stronger flashing effect
         const flashIntensity = electricityFlashTimer % 6 < 3 ? 0.15 : 0.05; // More noticeable flash
         context.fillStyle = `rgba(255, 255, 0, ${flashIntensity})`;
         context.fillRect(0, 0, boardWidth, boardHeight);
@@ -640,11 +593,11 @@ function updateScore() {
 }
 
 function moveLeft() {
-    velocityX = -240; // Converted to per-second (-4 * 60)
+    velocityX = -4;
 }
 
 function moveRight() {
-    velocityX = 240; // Converted to per-second (4 * 60)
+    velocityX = 4;
 }
 
 function resetGame() {
