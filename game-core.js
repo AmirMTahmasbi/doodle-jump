@@ -29,8 +29,8 @@ let player = {
 // Physics
 let velocityX = 0;
 let velocityY = 0;
-let initialVelocityY = -480; // Converted to per-second (-8 * 60)
-let gravity = 24; // Converted to per-second (0.4 * 60)
+let initialVelocityY = -8;
+let gravity = 0.4;
 
 // Game mechanics
 let water = 100;
@@ -69,21 +69,71 @@ let electricityFlashTimer = 0;
 
 // Difficulty levels based on altitude - much slower progression
 const difficultyLevels = {
-    1: { name: "Far from Peak", altitude: 0, weather: false, drones: false, gasExplosions: true, darkness: 0 },
-    2: { name: "Bad Weather", altitude: 3388, weather: true, drones: false, gasExplosions: true, darkness: 0.1 },
-    3: { name: "Weather + Drones", altitude: 4498, weather: true, drones: true, gasExplosions: false, darkness: 0.2 },
-    4: { name: "Weather + Gas + Drones", altitude: 5401, weather: false, drones: true, gasExplosions: true, darkness: 0.3 },
-    5: { name: "Gas + Electricity Issues", altitude: 6402, weather: false, drones: true, gasExplosions: true, darkness: 0.5 },
-    6: { name: "Water Shortage", altitude: 7403, weather: false, drones: true, gasExplosions: true, darkness: 0.55 },
-    7: { name: "Close to Peak", altitude: 8404, weather: false, drones: false, gasExplosions: true, darkness: 0.6 },
-    8: { name: "Peak", altitude: 9407, weather: true, drones: true, gasExplosions: true, darkness: 0.6 },
+    1: {
+        name: "Far from Peak",
+        altitude: 0,
+        weather: false,
+        drones: false,
+        gasExplosions: true,
+        darkness: 0,
+    },
+    2: {
+        name: "Bad Weather",
+        altitude: 3388,
+        weather: true,
+        drones: false,
+        gasExplosions: true,
+        darkness: 0.1,
+    },
+    3: {
+        name: "Weather + Drones",
+        altitude: 4498,
+        weather: true,
+        drones: true,
+        gasExplosions: false,
+        darkness: 0.2,
+    },
+    4: {
+        name: "Weather + Gas + Drones",
+        altitude: 5401,
+        weather: false,
+        drones: true,
+        gasExplosions: true,
+        darkness: 0.3,
+    },
+    5: {
+        name: "Gas + Electricity Issues",
+        altitude: 6402,
+        weather: false,
+        drones: true,
+        gasExplosions: true,
+        darkness: 0.5,
+    },
+    6: {
+        name: "Water Shortage",
+        altitude: 7403,
+        weather: false,
+        drones: true,
+        gasExplosions: true,
+        darkness: 0.55,
+    },
+    7: {
+        name: "Close to Peak",
+        altitude: 8404,
+        weather: false,
+        drones: false,
+        gasExplosions: true,
+        darkness: 0.6,
+    },
+    8: {
+        name: "Peak",
+        altitude: 9407,
+        weather: true,
+        drones: true,
+        gasExplosions: true,
+        darkness: 0.6,
+    },
 };
-
-// --- Fixed-step globals ---
-const STEP = 1 / 60;        // 60 Hz simulation
-const MAX_STEPS = 5;
-let acc = 0;
-let last = performance.now();
 
 // ========== RESPONSIVE INITIALIZATION ==========
 window.onload = function () {
@@ -95,7 +145,10 @@ window.onload = function () {
         return;
     }
 
+    // Set up responsive canvas
     setupResponsiveCanvas();
+    
+    // Handle orientation changes and resizes
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleOrientationChange);
 
@@ -104,7 +157,6 @@ window.onload = function () {
 
     initializeElectricitySegments();
     loadAllImages();
-    startMainLoop();
 };
 
 function setupResponsiveCanvas() {
@@ -168,6 +220,17 @@ function handleResize() {
         // Reinitialize electricity segments with new dimensions
         if (typeof initializeElectricitySegments === 'function') {
             initializeElectricitySegments();
+        }
+        
+        // Redraw current screen
+        if (gameState === 'character-select') {
+            if (typeof drawCharacterSelection === 'function') {
+                drawCharacterSelection();
+            }
+        } else if (gameState === 'playing' && gameOver) {
+            if (typeof drawGameOver === 'function') {
+                drawGameOver();
+            }
         }
     }, 100);
 }
@@ -240,14 +303,18 @@ function initializeGame(selectedCharacter) {
     gameState = "playing";
     currentCharacter = selectedCharacter;
 
+    // Load selected character images
     player.img = images[selectedCharacter + "_right"];
     playerJetpackImg = images[selectedCharacter + "_right_jetpack"];
 
     if (!player.img) {
-        console.error(`Failed to load character image: ${selectedCharacter}_right`);
+        console.error(
+            `Failed to load character image: ${selectedCharacter}_right`,
+        );
         return;
     }
 
+    // Reset game state
     water = 100;
     electricity = 100;
     score = 0;
@@ -255,6 +322,7 @@ function initializeGame(selectedCharacter) {
     altitude = 0;
     gameOver = false;
 
+    // Reset player position
     player.x = playerX;
     player.y = playerY;
     player.width = playerWidth;
@@ -263,15 +331,21 @@ function initializeGame(selectedCharacter) {
     velocityX = 0;
     velocityY = initialVelocityY;
 
+    // Clear arrays
     platformArray = [];
     voteBoxArray = [];
     droneArray = [];
     bulletArray = [];
     explosionArray = [];
 
+    // Reset electricity segments
     resetElectricitySegments();
+
     placePlatforms();
     setupGameControls();
+
+    console.log("Game initialized, starting main loop");
+    requestAnimationFrame(update);
 }
 
 // Reset electricity segments to initial state
@@ -282,36 +356,17 @@ function resetElectricitySegments() {
     });
 }
 
-// Start the main loop
-function startMainLoop() {
-    last = performance.now();
-    requestAnimationFrame(loop);
-}
-
-function loop(now = performance.now()) {
+// Main game loop
+function update() {
     if (gameState !== "playing") {
-        render();
-        requestAnimationFrame(loop);
+        console.log("Update called but game state is:", gameState);
         return;
     }
 
-    acc += Math.min(0.25, (now - last) / 1000);
-    last = now;
+    requestAnimationFrame(update);
 
-    let steps = 0;
-    while (acc >= STEP && steps < MAX_STEPS) {
-        fixedUpdate(STEP);
-        acc -= STEP;
-        steps++;
-    }
-
-    render();
-    requestAnimationFrame(loop);
-}
-
-// Fixed timestep simulation
-function fixedUpdate(dt) {
     if (gameOver) {
+        drawGameOver();
         return;
     }
 
@@ -322,15 +377,18 @@ function fixedUpdate(dt) {
     const currentDifficulty = getCurrentDifficulty();
 
     // Update resources
-    updateResources(currentDifficulty, dt);
+    updateResources(currentDifficulty);
 
     // Update electricity segments
     updateElectricitySegments();
 
+    // Clear screen with background
+    drawBackground(currentDifficulty);
+
     // Player physics
-    player.x += velocityX * dt;
-    player.y += velocityY * dt;
-    velocityY += gravity * dt;
+    player.x += velocityX;
+    player.y += velocityY;
+    velocityY += gravity;
 
     // Wrap around screen horizontally
     if (player.x > boardWidth) {
@@ -339,105 +397,91 @@ function fixedUpdate(dt) {
         player.x = boardWidth;
     }
 
-    // Update game objects with timestep
-    updatePlatforms(dt, currentDifficulty); // Placeholder: implement with dt
-    updateVoteBoxes(dt); // Placeholder: implement with dt
-    if (currentDifficulty.drones) updateDrones(dt); // Placeholder: implement with dt
-    updateBullets(dt); // Placeholder: implement with dt
-    updateExplosions(dt); // Placeholder: implement with dt
-
-    // Collision detection with platforms
-    for (let platform of platformArray) {
-        if (detectCollision(player, platform) && velocityY >= 0) {
-            player.y = platform.y - player.height; // Land on platform
-            velocityY = 0; // Stop falling
-            break;
-        }
-    }
-
-    // Update score
-    updateScore(dt);
-
-    // Check game over
-    if (player.y > boardHeight || electricity <= 0) {
-        gameOver = true;
-    }
-
-    // Update electricity flash timer
-    if (electricityFlashTimer > 0) {
-        electricityFlashTimer -= 1 * dt; // Scale by dt
-    }
-}
-
-// Rendering function
-function render() {
-    if (gameState === "character-select") {
-        drawCharacterSelection();
-        return;
-    } else if (gameState === "loading") {
-        return; // TODO: Draw loading screen if defined
-    }
-
-    if (gameOver) {
-        drawGameOver();
-        return;
-    }
-
-    const currentDifficulty = getCurrentDifficulty();
-
-    // Clear screen with background
-    drawBackground(currentDifficulty);
-
     // Choose player image based on water availability, movement direction, and dark mode
     let currentPlayerImg;
     const currentLevel = getCurrentDifficultyLevel();
     const isDarkMode = currentLevel >= 7;
 
+    // Get the appropriate character images based on dark mode
     let basePlayerImg, jetpackPlayerImg;
     if (isDarkMode) {
         basePlayerImg = images["dark_" + currentCharacter + "_right"];
-        jetpackPlayerImg = images["dark_" + currentCharacter + "_right_jetpack"];
+        jetpackPlayerImg =
+            images["dark_" + currentCharacter + "_right_jetpack"];
+        console.log(
+            `Using dark mode character images: base=${basePlayerImg ? "found" : "NOT FOUND"}, jetpack=${jetpackPlayerImg ? "found" : "NOT FOUND"}`,
+        );
     } else {
         basePlayerImg = images[currentCharacter + "_right"];
         jetpackPlayerImg = images[currentCharacter + "_right_jetpack"];
     }
 
+    // Fallback to normal images if dark mode images not found
     if (!basePlayerImg) {
-        console.warn(`Dark mode character image not found, falling back to normal mode`);
+        console.warn(
+            `Dark mode character image not found, falling back to normal mode`,
+        );
         basePlayerImg = images[currentCharacter + "_right"];
         jetpackPlayerImg = images[currentCharacter + "_right_jetpack"];
     }
 
     if (water > 0) {
+        // With water: use jetpack when going up, normal when going down
         if (velocityY < 0) {
-            currentPlayerImg = jetpackPlayerImg;
+            currentPlayerImg = jetpackPlayerImg; // Jetpack when going up with water
         } else {
-            currentPlayerImg = basePlayerImg;
+            currentPlayerImg = basePlayerImg; // Normal when falling even with water
         }
     } else {
+        // Without water: always use normal image (no jetpack)
         currentPlayerImg = basePlayerImg;
     }
 
+    // Draw player
     if (currentPlayerImg) {
-        context.drawImage(currentPlayerImg, player.x, player.y, player.width, player.height);
+        context.drawImage(
+            currentPlayerImg,
+            player.x,
+            player.y,
+            player.width,
+            player.height,
+        );
     }
 
-    // Draw game objects (placeholders; implement these functions)
-    drawPlatforms();
-    drawVoteBoxes();
-    if (currentDifficulty.drones) drawDrones();
-    drawBullets();
-    drawExplosions();
+    // Update and draw platforms
+    updatePlatforms(currentDifficulty);
+
+    // Update and draw vote boxes
+    updateVoteBoxes();
+
+    // Update and draw drones
+    if (currentDifficulty.drones) {
+        updateDrones();
+    }
+
+    // Update and draw bullets
+    updateBullets();
+
+    // Update and draw explosions
+    updateExplosions();
+
+    // Update score
+    updateScore();
 
     // Draw UI
     drawUI(currentDifficulty);
+
+    // Check game over - only when player falls off screen or electricity runs out
+    if (player.y > board.height) {
+        gameOver = true;
+    }
 
     // Apply darkness overlay
     if (currentDifficulty.darkness > 0) {
         applyDarkness(currentDifficulty.darkness);
     }
 
-    // Apply electricity flash effect
+    // Apply electricity flash effect (should be last)
     applyElectricityFlash();
 }
 
@@ -460,34 +504,43 @@ function getCurrentDifficultyLevel() {
     return 1;
 }
 
-function updateResources(difficulty, dt) {
+function updateResources(difficulty) {
     const previousElectricity = electricity;
     const currentLevel = getCurrentDifficultyLevel();
 
-    // Water consumption with every jump (when moving up)
+    // Water consumption with every jump (when moving up) - reduced amount
     if (velocityY < 0) {
-        water -= 12 * dt; // 0.2 * 60 scaled by dt
+        // When jumping up
+        water -= 0.2; // Reduced from 0.5 to 0.2 for longer gameplay
         if (water < 0) water = 0;
     }
 
-    // Electricity consumption in higher levels
+    // Electricity consumption in higher levels - much slower
     if (difficulty.altitude >= 4000) {
-        electricity -= 1.2 * dt; // 0.02 * 60 scaled by dt
+        // Changed from 2000 to 4000
+        electricity -= 0.02; // Reduced from 0.05 to 0.02
         if (electricity < 0) electricity = 0;
     }
 
-    if (Math.floor(electricity / 20) < Math.floor(previousElectricity / 20) && electricity < 80) {
+    // Flash screen when electricity decreases significantly
+    if (
+        Math.floor(electricity / 20) < Math.floor(previousElectricity / 20) &&
+        electricity < 80
+    ) {
         createElectricityFlash();
     }
 }
 
 function createElectricityFlash() {
-    electricityFlashTimer = 30; // 0.5 sec at 60 Hz
+    electricityFlashTimer = 30; // Flash for 30 frames (more visible)
 }
 
 function applyElectricityFlash() {
     if (electricityFlashTimer > 0) {
-        const flashIntensity = electricityFlashTimer % 6 < 3 ? 0.15 : 0.05;
+        electricityFlashTimer--;
+
+        // Create stronger flashing effect
+        const flashIntensity = electricityFlashTimer % 6 < 3 ? 0.15 : 0.05; // More noticeable flash
         context.fillStyle = `rgba(255, 255, 0, ${flashIntensity})`;
         context.fillRect(0, 0, boardWidth, boardHeight);
     }
@@ -500,6 +553,7 @@ function updateElectricitySegments() {
     // Hide segments based on difficulty level (segments get hidden from right to left)
     for (let i = 0; i < electricitySegments.length; i++) {
         if (i >= 6 - currentLevel) {
+            // Level 1: 5 visible, Level 2: 4 visible, etc.
             electricitySegments[i].visible = false;
         } else {
             electricitySegments[i].visible = true;
@@ -508,7 +562,9 @@ function updateElectricitySegments() {
 
     // Update filled state based on electricity percentage
     const visibleSegments = electricitySegments.filter((seg) => seg.visible);
-    const filledSegmentCount = Math.ceil((electricity / 100) * visibleSegments.length);
+    const filledSegmentCount = Math.ceil(
+        (electricity / 100) * visibleSegments.length,
+    );
 
     visibleSegments.forEach((segment, index) => {
         segment.filled = index < filledSegmentCount;
@@ -524,8 +580,8 @@ function detectCollision(a, b) {
     );
 }
 
-function updateScore(dt) {
-    let points = Math.floor(50 * Math.random() * dt * 60); // Scale points by frame time
+function updateScore() {
+    let points = Math.floor(50 * Math.random());
     if (velocityY < 0) {
         maxScore += points;
         if (score < maxScore) {
@@ -537,11 +593,11 @@ function updateScore(dt) {
 }
 
 function moveLeft() {
-    velocityX = -240; // -4 * 60
+    velocityX = -4;
 }
 
 function moveRight() {
-    velocityX = 240; // 4 * 60
+    velocityX = 4;
 }
 
 function resetGame() {
@@ -563,15 +619,15 @@ function placePlatforms() {
     let platform = {
         img: images.platform,
         x: boardWidth / 2,
-        y: playerY + playerHeight, // Place just below player start
+        y: boardHeight - 50,
         width: platformWidth,
         height: platformHeight,
         type: "normal",
     };
     platformArray.push(platform);
 
-    // Create more platforms initially with closer spacing
-    for (let i = 0; i < 80; i++) {
+    // Create MANY MORE platforms initially with closer spacing
+    for (let i = 0; i < 80; i++) { // Increased from 30 to 80 platforms
         newPlatform(difficultyLevels[1]);
     }
 }
@@ -587,56 +643,83 @@ function newPlatform(difficulty) {
     // Calculate dynamic spacing based on altitude/difficulty
     let platformGap;
     if (altitude < 1000) {
-        platformGap = 60;
+        platformGap = 60; // Harder at the beginning - wider gaps
     } else if (altitude < 2000) {
-        platformGap = 65;
+        platformGap = 65; // Getting easier
     } else if (altitude < 3000) {
-        platformGap = 70;
+        platformGap = 70; // Medium spacing
     } else if (altitude < 4000) {
-        platformGap = 70;
+        platformGap = 70; // Closer spacing
     } else if (altitude < 5000) {
-        platformGap = 75;
+        platformGap = 75; // Even closer
     } else if (altitude < 6000) {
-        platformGap = 75;
+        platformGap = 75; // Very close
     } else {
-        platformGap = 75;
+        platformGap = 75; // Easiest spacing at high altitude
     }
 
-    console.log(`Creating new platform - Level: ${currentLevel}, Dark Mode: ${isDarkMode}, Gap: ${platformGap}`);
+    console.log(
+        `Creating new platform - Level: ${currentLevel}, Dark Mode: ${isDarkMode}, Gap: ${platformGap}`,
+    );
 
     // Choose image based on mode and difficulty
     if (isDarkMode) {
-        if (difficulty.gasExplosions && Math.random() < 0.35) {
+        // Dark mode images
+        console.log("Using dark mode images");
+        if (difficulty.gasExplosions && Math.random() < 0.35) { // Increased from 0.3 to 0.35 for more gas platforms
             platformType = "gas";
             platformImg = images.dark_gas_platform;
+            console.log(
+                `Selected dark gas platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
         } else if (Math.random() < 0.1) {
             platformType = "broken";
             platformImg = images["dark_platform-broken"];
+            console.log(
+                `Selected dark broken platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
         } else {
             platformImg = images.dark_platform;
+            console.log(
+                `Selected dark normal platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
         }
     } else {
-        if (difficulty.gasExplosions && Math.random() < 0.15) {
+        // Normal mode images
+        console.log("Using normal mode images");
+        if (difficulty.gasExplosions && Math.random() < 0.15) { // Increased from 0.1 to 0.15 for more gas platforms
             platformType = "gas";
             platformImg = images.gas_platform;
+            console.log(
+                `Selected normal gas platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
         } else if (Math.random() < 0.1) {
             platformType = "broken";
             platformImg = images["platform-broken"];
+            console.log(
+                `Selected normal broken platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
         } else {
             platformImg = images.platform;
+            console.log(
+                `Selected normal platform: ${platformImg ? "found" : "NOT FOUND"}`,
+            );
         }
     }
 
     // Fallback if image not found
     if (!platformImg) {
-        console.error(`Platform image not found for type: ${platformType}, dark mode: ${isDarkMode}`);
-        platformImg = images.platform || createFallbackImage("platform.png");
+        console.error(
+            `Platform image not found for type: ${platformType}, dark mode: ${isDarkMode}`,
+        );
+        console.log("Available image keys:", Object.keys(images));
+        platformImg = images.platform || createFallbackImage("platform.png"); // Use normal platform as fallback
     }
 
     let platform = {
         img: platformImg,
         x: randomX,
-        y: platformArray[platformArray.length - 1].y - platformGap,
+        y: platformArray[platformArray.length - 1].y - platformGap, // Use dynamic gap
         width: platformType === "gas" ? gasPlatformWidth : platformWidth,
         height: platformType === "gas" ? gasPlatformHeight : platformHeight,
         type: platformType,
@@ -644,106 +727,19 @@ function newPlatform(difficulty) {
 
     platformArray.push(platform);
 
+    // Vote boxes remain the same - original 15% chance
     if (Math.random() < 0.15) {
         const voteBoxImg = isDarkMode ? images.dark_vote_box : images.vote_box;
+        console.log(
+            `Creating vote box - Dark mode: ${isDarkMode}, Image found: ${voteBoxImg ? "yes" : "no"}`,
+        );
+
         voteBoxArray.push({
             x: randomX + 70,
             y: platform.y - 40,
             width: 60,
             height: 60,
-            img: voteBoxImg || images.vote_box,
+            img: voteBoxImg || images.vote_box, // Fallback to normal vote box
         });
     }
-}
-
-// Placeholder functions (implement these based on your needs)
-function loadAllImages() {
-    // TODO: Implement image loading logic
-    console.log("Image loading placeholder");
-}
-
-function setupGameControls() {
-    // TODO: Implement control setup
-    console.log("Game controls setup placeholder");
-}
-
-function drawCharacterSelection() {
-    // TODO: Implement character selection screen
-    console.log("Character selection drawing placeholder");
-}
-
-function drawGameOver() {
-    // TODO: Implement game over screen
-    console.log("Game over drawing placeholder");
-}
-
-function drawBackground(difficulty) {
-    // TODO: Implement background drawing
-    console.log("Background drawing placeholder");
-}
-
-function drawPlatforms() {
-    // TODO: Implement platform drawing
-    console.log("Platforms drawing placeholder");
-}
-
-function drawVoteBoxes() {
-    // TODO: Implement vote boxes drawing
-    console.log("Vote boxes drawing placeholder");
-}
-
-function drawDrones() {
-    // TODO: Implement drones drawing
-    console.log("Drones drawing placeholder");
-}
-
-function drawBullets() {
-    // TODO: Implement bullets drawing
-    console.log("Bullets drawing placeholder");
-}
-
-function drawExplosions() {
-    // TODO: Implement explosions drawing
-    console.log("Explosions drawing placeholder");
-}
-
-function drawUI(difficulty) {
-    // TODO: Implement UI drawing (score, water, electricity)
-    console.log("UI drawing placeholder");
-}
-
-function applyDarkness(darkness) {
-    // TODO: Implement darkness overlay
-    console.log("Darkness overlay placeholder");
-}
-
-function updatePlatforms(dt, difficulty) {
-    // TODO: Implement platform updates with dt
-    console.log("Platforms update placeholder");
-}
-
-function updateVoteBoxes(dt) {
-    // TODO: Implement vote boxes updates with dt
-    console.log("Vote boxes update placeholder");
-}
-
-function updateDrones(dt) {
-    // TODO: Implement drones updates with dt
-    console.log("Drones update placeholder");
-}
-
-function updateBullets(dt) {
-    // TODO: Implement bullets updates with dt
-    console.log("Bullets update placeholder");
-}
-
-function updateExplosions(dt) {
-    // TODO: Implement explosions updates with dt
-    console.log("Explosions update placeholder");
-}
-
-function createFallbackImage(filename) {
-    // TODO: Implement fallback image creation
-    console.log("Fallback image creation placeholder");
-    return null; // Placeholder return
 }
