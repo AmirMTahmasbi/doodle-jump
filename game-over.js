@@ -73,7 +73,7 @@ function drawGameOver() {
     // Action buttons using your custom images
     const buttonY = boardHeight * 0.5; // ~600px at 900px height, middle-lower part
     const buttonWidth = boardWidth * 0.3; // ~120px at 450px width
-    const buttonHeight = boardHeight * 0.2; // ~90px at 900px height
+    const buttonHeight = boardHeight * 0.15; // ~90px at 900px height
     const buttonGap = boardWidth * 0.0044; // ~20px at 450px width
 
     // Calculate button positions
