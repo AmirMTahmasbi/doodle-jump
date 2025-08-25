@@ -255,7 +255,7 @@ function initializeElectricitySegments() {
         const segmentWidth = (barWidth - (totalSegments - 1) * ResponsiveUtils.scale(2)) / totalSegments;
         const segmentGap = ResponsiveUtils.scale(2);
         const electricityX = boardWidth - barWidth - safeArea.right - ResponsiveUtils.scale(15);
-        const barY = safeArea.top + ResponsiveUtils.scale(15)-10;
+        const barY = safeArea.top + ResponsiveUtils.scale(15)-20;
 
         for (let i = 0; i < totalSegments; i++) {
             electricitySegments.push({
