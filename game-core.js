@@ -298,7 +298,9 @@ function initializeGame(selectedCharacter) {
         console.error("No character provided to initializeGame!");
         return;
     }
-
+    if (typeof GameAudioIntegration !== 'undefined') {
+        GameAudioIntegration.onGameStart();
+    }
     console.log("Initializing game with character:", selectedCharacter);
     gameState = "playing";
     currentCharacter = selectedCharacter;

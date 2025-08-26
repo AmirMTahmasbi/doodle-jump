@@ -27,7 +27,12 @@
 </head>
 <body>
     <canvas id="board"></canvas>
+    <div class="audio-controls">
+        <button class="mute-button" onclick="AudioManager.toggleMute()">🔊</button>
+    </div>
+    
     <script src="game-core.js"></script>
+    <script src="audio-system.js"></script>
     <!-- Load responsive utilities first -->
     <script src="responsive-utils.js"></script>
     <script src="image-loader.js"></script>

@@ -29,6 +29,10 @@ function initializeMenu() {
     selectedCharacter = null;
     drawCharacterSelection();
     setupMenuControls();
+     // Start music when menu loads
+    if (typeof GameAudioIntegration !== 'undefined') {
+        GameAudioIntegration.onMenuStart();
+}
 }
 
 // Draw character selection screen
